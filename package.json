@@ -1,0 +1,38 @@
+{
+  "name": "appostrophe-backend-case-study",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "setup": "cp -n .env.example .env && npm install",
+    "start-case-study": "node scripts/start-case-study.js",
+    "test": "jest",
+    "build": "tsc",
+    "typecheck": "tsc --noEmit",
+    "db:up": "docker compose up -d",
+    "db:down": "docker compose down -v"
+  },
+  "dependencies": {
+    "@types/express-rate-limit": "^5.1.3",
+    "debug": "~2.6.9",
+    "dotenv": "^17.3.1",
+    "express": "~4.16.1",
+    "express-rate-limit": "^8.3.1",
+    "morgan": "^1.10.1",
+    "pg": "^8.11.5",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@types/debug": "^4.1.12",
+    "@types/express": "^5.0.6",
+    "@types/jest": "^30.0.0",
+    "@types/morgan": "^1.9.10",
+    "@types/node": "^25.4.0",
+    "@types/pg": "^8.18.0",
+    "@types/supertest": "^7.2.0",
+    "jest": "^30.3.0",
+    "supertest": "^7.2.2",
+    "ts-jest": "^29.4.6",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.3"
+  }
+}
