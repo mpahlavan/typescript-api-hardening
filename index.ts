@@ -5,7 +5,7 @@ import { Request, Response } from 'express';
 import app from './src/app';
 import db from './src/db';
 
-const log = debug('appostrophe-backend-case-study:server');
+const log = debug('template-api:server');
 
 // Health check hits the DB so we know both the app and the database are reachable
 app.get('/health', async (_req: Request, res: Response) => {

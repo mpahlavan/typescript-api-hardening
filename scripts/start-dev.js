@@ -26,7 +26,7 @@ async function waitForDatabase(maxAttempts = 30) {
   const dockerCompose = getDockerComposeCommand();
   for (let i = 0; i < maxAttempts; i++) {
     try {
-      execSync(`${dockerCompose} exec -T db pg_isready -U postgres -d appostrophe`, { stdio: 'ignore' });
+      execSync(`${dockerCompose} exec -T db pg_isready -U postgres -d template_api`, { stdio: 'ignore' });
       return true;
     } catch (e) {
       await setTimeout(1000);
@@ -36,7 +36,7 @@ async function waitForDatabase(maxAttempts = 30) {
 }
 
 async function main() {
-  console.log('🚀 Starting Appostrophe Backend Case Study...\n');
+  console.log('🚀 Starting Template API...\n');
 
   // Check Docker
   if (!(await checkDocker())) {

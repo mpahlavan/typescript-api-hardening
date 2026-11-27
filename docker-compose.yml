@@ -2,9 +2,9 @@ version: '3.9'
 services:
   db:
     image: postgres:16-alpine
-    container_name: appostrophe_case_db_1
+    container_name: template_api_db
     environment:
-      POSTGRES_DB: appostrophe
+      POSTGRES_DB: template_api
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
     ports:
@@ -12,7 +12,7 @@ services:
     volumes:
       - ./db/init:/docker-entrypoint-initdb.d:ro
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d appostrophe"]
+      test: ["CMD-SHELL", "pg_isready -U postgres -d template_api"]
       interval: 5s
       timeout: 3s
       retries: 10

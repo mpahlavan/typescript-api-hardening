@@ -1,10 +1,10 @@
 #!/bin/bash
 
-# Start the case study - brings up database and backend
+# Start the local database and the backend
 
 set -e
 
-echo "🚀 Starting Appostrophe Backend Case Study..."
+echo "🚀 Starting Template API..."
 echo ""
 
 # Check if docker is running
@@ -23,7 +23,7 @@ max_attempts=30
 attempt=0
 
 while [ $attempt -lt $max_attempts ]; do
-  if docker compose exec -T db pg_isready -U postgres -d appostrophe > /dev/null 2>&1; then
+  if docker compose exec -T db pg_isready -U postgres -d template_api > /dev/null 2>&1; then
     echo "✅ Database is ready!"
     break
   fi

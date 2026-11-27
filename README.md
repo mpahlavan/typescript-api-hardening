@@ -1,148 +1,81 @@
-# Appostrophe Backend Case Study
+# Template API: hardening a TypeScript backend for production
 
-Welcome! In this case study, you will find a codebase that you must refactor! The codebase is full of horrible
-practices and bugs that are placed intentionally to be caught; some harder than others. Your task is to refactor and
-harden this codebase into a production-ready backend.
+A refactor of a deliberately broken Express + PostgreSQL API (design templates and their categories) into a backend that is safe, typed, tested and observable. The starting code had SQL injection, a leaking database client, an N+1 query, a cache that returned the wrong data, raw stack traces in responses and no tests.
 
-## Quick Start
+Every change, and the reason for it, is written up in **[CHANGES.md](CHANGES.md)**.
 
-Works on macOS, Linux, and Windows:
+## What changed
 
-```bash
-npm install
-npm run start-case-study
-```
+| Problem in the original | Fix |
+|---|---|
+| SQL built by string concatenation (injectable) | Parameterized queries everywhere |
+| New DB client per request, never released | One shared `pg` Pool, idle-client error handler |
+| N+1 query on `GET /templates` | Single `LEFT JOIN` + `array_agg` query |
+| Cache overwritten by search results | Cache module with 60 s TTL and invalidation on every write |
+| Raw errors and stack traces sent to clients | Logged server-side, generic 500 to the client |
+| `/templates/search` shadowed by `/:id` | Route order fixed |
+| No input validation | Zod schemas, structured 400s naming the bad field |
+| No throttling | Rate limit: 100 requests per IP per minute |
+| Process killed mid-request on deploy | Graceful shutdown on SIGTERM/SIGINT (stop accepting, drain pool) |
+| Join table with a stray column, no indexes | Migration `002_improvements.sql`: drop column, add CHECK and indexes |
+| No tests, app not importable | App factory + 27 Jest/Supertest tests, DB mocked |
 
-This will:
+## Quick start
 
-1. Start the PostgreSQL database in Docker
-2. Wait for the database to be ready
-3. Start the backend server on port 5003
-
-The server will be available at `http://localhost:5003`.
-
-## What You're Working With
-
-This is a backend API for managing design templates and their categories.
-
-### Database
-
-- **Host**: `localhost`
-- **Port**: `6543`
-- **Database**: `appostrophe`
-- **User**: `postgres`
-- **Password**: `postgres`
-
-The database schema includes:
-
-- `templates` - Design templates with metadata
-- `categories` - Template categories
-
-Initial data is seeded automatically when the database starts.
-
-### API Endpoints
-
-The current API provides the following endpoints:
-
-- `GET /templates` - List all templates
-- `GET /templates/:id` - Get a single template
-- `POST /templates` - Create a new template
-- `PATCH /templates/:id` - Update a template
-- `DELETE /templates/:id` - Delete a template
-- `GET /templates/search?q=...` - Search templates
-- `GET /categories` - List all categories
-- `POST /categories` - Create a new category
-- `GET /stats` - Get request statistics
-- `GET /health` - Health check endpoint
-
-## Your Task
-
-Your goal is to transform this codebase into a reliable, secure, and maintainable backend. At a high level, you should:
-
-1. **Identify Issues**
-   - Review the codebase and find problems around:
-     - Security
-     - Performance
-     - Reliability and error handling
-     - Code organization and maintainability
-     - API design and consistency
-
-2. **Eliminate avoidable runtime errors due to typing**
-   - Introduce stronger typing wherever it makes sense (for example: TypeScript, a different strongly typed language, or rigorous runtime validation).
-   - Define clear data shapes for:
-     - Database rows
-     - Request payloads
-     - Responses returned from each endpoint
-   - Make it difficult for type mismatches to slip through to production.
-
-3. **Improve Data Access and Error Handling**
-   - Replace unsafe queries with parameterized ones
-   - Use a more robust approach to database connections (e.g. pooling, retries where appropriate)
-   - Add clearer error handling and consistent error responses
-
-4. **Implement More Thoughtful Caching**
-   - Replace the naive in-memory caching with something more deliberate:
-     - Define what should be cached and for how long
-     - Make it easy to reason about and invalidate when data changes
-
-5. **Add Essential Production Features**
-   - Better health checks
-   - Graceful shutdown behavior
-   - Basic logging/observability
-   - Any other improvements you think are important for a production backend
-
-## What We're Looking For
-
-We want to see how you approach a real-world refactoring task. There's no single "right" answer, but we're interested in:
-
-- **Problem identification**: Can you spot issues before they crash the server in production?
-- **Prioritization**: Do you focus on critical issues first?
-- **Code quality**: Is your refactored code clean, maintainable, and well-organized?
-- **Testing**: Do you add tests for critical functionality?
-- **Documentation**: Do you document your changes and decisions?
-  - We aren't looking for every function documented, but self-documenting code is a plus.
-
-## Getting Started
-
-1. Start docker on your machine.
-2. Run `cp .env.example .env` and fill in your credentials
-3. Run `npm install` to install dependencies
-4. Run `npm run start-case-study` to start the database and server
-5. Explore the codebase and API endpoints
-6. Start refactoring!
-
-## Testing
-
-### Automated tests
+Needs Node.js 20+ and Docker.
 
 ```bash
-npm test
+git clone https://github.com/mpahlavan/typescript-api-hardening.git
+cd typescript-api-hardening
+npm run setup        # copies .env.example to .env and installs dependencies
+npm run start-dev    # starts PostgreSQL in Docker, waits for it, starts the API on :5003
 ```
 
-Runs 27 Jest tests covering all endpoints and the cache module. The database is fully mocked — no running server needed.
-
-### Manual smoke test
-
-With the server running, you can exercise every endpoint against the real database:
+Then, in another terminal:
 
 ```bash
-chmod +x test_api.sh
-./test_api.sh
+curl localhost:5003/health
+./test_api.sh        # hits every endpoint, including the expected 400 and 404 cases
 ```
 
-This script hits all routes in order — including expected error cases (missing fields, non-existent ids, invalid JSON) — so you can visually verify correct status codes and response shapes.
+Stop and remove the database with `npm run db:down`.
 
----
+## Tests
 
-## Notes
+```bash
+npm test             # 27 tests, no database or server needed
+npm run typecheck
+```
 
-- Feel free to add dependencies as needed (validation libraries, testing frameworks, etc.)
-- You can modify the database schema if necessary, but document why
-- The current code uses Express 4.x and PostgreSQL via the `pg` library
-  - Again, feel free to use ANY library, or version of your choice.
+## API
 
-## Questions?
+| Method | Path | Description |
+|---|---|---|
+| GET | `/templates` | List templates with their categories (cached) |
+| GET | `/templates/search?q=...` | Search templates |
+| GET | `/templates/:id` | One template |
+| POST | `/templates` | Create a template |
+| PATCH | `/templates/:id` | Update a template |
+| DELETE | `/templates/:id` | Delete a template |
+| GET | `/categories` | List categories |
+| POST | `/categories` | Create a category |
+| GET | `/stats` | Request count since start |
+| GET | `/health` | Health check |
 
-If you have questions about the requirements or need clarification, please ask! We're here to help.
+## Layout
 
-Good luck!
+```
+index.ts            server start and graceful shutdown
+src/app.ts          Express app factory (middleware, routes)
+src/db.ts           pg Pool
+src/cache.ts        TTL cache with invalidation
+src/schemas.ts      Zod request validation
+src/types.ts        row and request types
+src/routes/         templates and categories routes
+db/init/            original schema and the improvement migration
+tests/              Jest + Supertest suites
+```
+
+## Deliberately left out
+
+Redis (one process doesn't need a shared cache), authentication (out of scope), per-query retries (the pool already handles transient connection errors). The request counter is in memory and resets on restart; a metrics library such as `prom-client` would replace it in production. Details in [CHANGES.md](CHANGES.md).

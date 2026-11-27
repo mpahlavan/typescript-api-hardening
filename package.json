@@ -1,10 +1,10 @@
 {
-  "name": "appostrophe-backend-case-study",
+  "name": "template-api",
   "version": "1.0.0",
   "private": true,
   "scripts": {
     "setup": "cp -n .env.example .env && npm install",
-    "start-case-study": "node scripts/start-case-study.js",
+    "start-dev": "node scripts/start-dev.js",
     "test": "jest",
     "build": "tsc",
     "typecheck": "tsc --noEmit",

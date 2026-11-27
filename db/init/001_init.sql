@@ -1,4 +1,4 @@
--- Intentionally simplistic schema for the case study (ripe for improvement)
+-- Original schema as received (improved in 002_improvements.sql)
 CREATE TABLE IF NOT EXISTS templates (
   id TEXT PRIMARY KEY,
   title TEXT NOT NULL,
